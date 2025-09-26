@@ -5,4 +5,7 @@ export default {
   out: './drizzle',
   dialect: 'sqlite',
   driver: 'expo',
+  dbCredentials: {
+    url: './local.db',
+  },
 } satisfies Config;
