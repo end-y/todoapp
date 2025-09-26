@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Toast from 'react-native-toast-message';
 import { createList, deleteList, getAllLists, getListById, updateList } from '@/queries/lists';
 
 export const useGetAllLists = () => {
@@ -29,6 +30,12 @@ export const useCreateList = () => {
     mutationFn: createList,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lists'] });
+      Toast.show({
+        type: 'success',
+        text1: 'Liste oluşturuldu',
+        text2: 'Yeni liste başarıyla oluşturuldu!',
+        position: 'top',
+      });
     },
   });
 };
@@ -40,6 +47,13 @@ export const useUpdateList = () => {
     mutationFn: ({ id, name }: { id: number; name: string }) => updateList(id, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lists'] });
+      Toast.show({
+        type: 'success',
+        text1: 'Liste güncellendi',
+        text2: 'Liste başarıyla güncellendi!',
+        position: 'top',
+        topOffset: 100,
+      });
     },
   });
 };
@@ -54,6 +68,13 @@ export const useDeleteListById = () => {
       queryClient.invalidateQueries({ queryKey: ['lists'] });
       // Tasks cache'ini de invalidate et (listStore için)
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      Toast.show({
+        type: 'success',
+        text1: 'Liste silindi',
+        text2: 'Liste başarıyla silindi!',
+        position: 'top',
+        topOffset: 100,
+      });
     },
   });
 };

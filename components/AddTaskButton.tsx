@@ -66,6 +66,7 @@ const AddTaskButton = ({ onAddTask, backgroundColor }: AddTaskButtonProps) => {
       setDescription('');
       setDueDate('');
       setShowDetails(false);
+      setIsExpanded(false);
       inputRef.current?.blur();
     }
   };

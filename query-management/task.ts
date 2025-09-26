@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Toast from 'react-native-toast-message';
 
 import {
   createTask,
@@ -89,6 +90,13 @@ export const useCreateTask = () => {
       queryClient.invalidateQueries({ queryKey: ['lists'] });
       // Specific list tasks cache'ini de invalidate et
       queryClient.invalidateQueries({ queryKey: ['tasks', 'list'] });
+      Toast.show({
+        type: 'success',
+        text1: 'Görev oluşturuldu',
+        text2: 'Yeni görev başarıyla oluşturuldu!',
+        position: 'top',
+        topOffset: 100,
+      });
     },
   });
 };
@@ -102,6 +110,13 @@ export const useDeleteTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['lists'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'list'] });
+      Toast.show({
+        type: 'success',
+        text1: 'Görev silindi',
+        text2: 'Görev başarıyla silindi!',
+        position: 'top',
+        topOffset: 100,
+      });
     },
   });
 };
@@ -115,6 +130,13 @@ export const useUpdateTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['lists'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', 'list'] });
+      Toast.show({
+        type: 'success',
+        text1: 'Görev güncellendi',
+        text2: 'Görev başarıyla güncellendi!',
+        position: 'top',
+        topOffset: 100,
+      });
     },
   });
 };
