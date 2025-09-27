@@ -1,6 +1,6 @@
 import { Stack, Slot, useLocalSearchParams } from 'expo-router';
 import { Text, View, Platform } from 'react-native';
-import { useReducer, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Swipable from '@/components/Swipable';
 import AddTaskButton from '@/components/AddTaskButton';
 import OptimizedFlatList from '@/components/OptimizedFlatList';
@@ -14,9 +14,7 @@ import {
   useGetTasksByListId,
   useUpdateTask,
 } from '@/query-management/task';
-import { listElementReducer, initialListState } from '@/reducers/list';
 import { ScreenProvider } from './context';
-import { initialTaskState, taskReducer } from '@/reducers/task';
 import PageHeader from '@/components/PageHeader';
 import TaskItem from '@/components/TaskItem';
 import ListNavigation from '@/navigations/list-navigations';
@@ -26,11 +24,16 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function ScreensLayout() {
   const params = useLocalSearchParams();
-  const [listState, listDispatch] = useReducer(listElementReducer, initialListState);
+
+  // Simple local state instead of reducers
+  const [currentListId, setCurrentListId] = useState<number | null>(null);
+  const [listName, setListName] = useState('Adsız Başlık');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const createTaskMutation = useCreateTask();
   const deleteTaskMutation = useDeleteTask();
   const updateTaskMutation = useUpdateTask();
-  const [taskState, taskDispatch] = useReducer(taskReducer, initialTaskState);
   const { handleError, handleQueryError, withErrorHandling } = useErrorHandler('ListLayout');
   const { tasks, setTasks, filter } = useListStore();
   // Tüm hook'ları unconditional çağır
@@ -38,7 +41,7 @@ export default function ScreensLayout() {
   const importantTasksQuery = useGetImportantTasks();
   const todayTasksQuery = useGetTodayTasks();
   const unassignedTasksQuery = useGetUnassignedTasks();
-  const listTasksQuery = useGetTasksByListId(listState.id || 0);
+  const listTasksQuery = useGetTasksByListId(currentListId || 0);
 
   // Aktif query'yi seç
   const getActiveQuery = useCallback(() => {
@@ -78,8 +81,7 @@ export default function ScreensLayout() {
   const { data: existingTasks = [] } = getActiveQuery();
   const handleAddTask = useCallback(
     async (taskName: string, description?: string, dueDate?: string) => {
-      // Liste ID'sini context'ten veya params'tan al
-      const currentListId = listState.id;
+      // Liste ID'sini state'ten al
 
       if (!taskName.trim()) {
         console.warn('Liste ID veya task adı eksik');
@@ -108,29 +110,26 @@ export default function ScreensLayout() {
 
       await safeCreateTask(task);
     },
-    [listState.id, createTaskMutation, withErrorHandling]
-  );
-
-  // Liste ID'sini set etme fonksiyonu
-  const setCurrentListId = useCallback(
-    (id: number) => {
-      listDispatch({ type: 'SET_LIST_ID', payload: id });
-    },
-    [listDispatch]
+    [currentListId, createTaskMutation, withErrorHandling]
   );
 
   const contextValue = {
-    listState,
-    listDispatch,
-    handleAddTask,
+    currentListId,
+    listName,
+    isLoading,
+    error,
     setCurrentListId,
+    setListName,
+    setIsLoading,
+    setError,
+    handleAddTask,
   };
+
   const handleDeleteTask = useCallback(
     (task: any) => {
-      taskDispatch({ type: 'DELETE_TASK', payload: task.id });
       deleteTaskMutation.mutate(task.id);
     },
-    [deleteTaskMutation, taskDispatch]
+    [deleteTaskMutation]
   );
 
   const handleToggleComplete = useCallback(
@@ -144,16 +143,12 @@ export default function ScreensLayout() {
   const getContainerColor = useCallback(() => {
     return `bg-${params.color ?? 'purple'}`;
   }, [params.color]);
-  // Task'ları yükle ve filtrele - tek useEffect ile
-  useEffect(() => {
+
+  // Simplified task management - sadece React Query data'sını kullan
+  const displayTasks = useCallback(() => {
     let finalTasks = existingTasks;
 
-    // Önce existingTasks'ı kullan
-    if (existingTasks.length > 0) {
-      finalTasks = existingTasks;
-    }
-
-    // Zustand store'dan tasks varsa onları kullan
+    // Zustand store'dan tasks varsa onları kullan (modal operations için)
     if (tasks.length > 0) {
       finalTasks = tasks;
     }
@@ -163,11 +158,8 @@ export default function ScreensLayout() {
       finalTasks = finalTasks.filter((task) => filter(task));
     }
 
-    // Sadece tasks gerçekten değiştiyse dispatch et
-    if (finalTasks.length > 0 || taskState.tasks.length > 0) {
-      taskDispatch({ type: 'SET_TASKS', payload: finalTasks });
-    }
-  }, [existingTasks, tasks, filter]); // Tüm dependencies bir arada
+    return finalTasks;
+  }, [existingTasks, tasks, filter]);
   const renderTaskItem = useCallback(
     ({ item }: { item: any }) => (
       <Swipable key={item.id} onDelete={() => handleDeleteTask(item)}>
@@ -180,17 +172,16 @@ export default function ScreensLayout() {
     <ScreenProvider value={contextValue}>
       <View className={[styles.container, getContainerColor()].join(' ')}>
         <View className={styles.container_inner}>
-          <ListNavigation list={taskState.tasks} backgroundColor={getContainerColor()} />
+          <ListNavigation list={displayTasks()} backgroundColor={getContainerColor()} />
           {/* Hata mesajları */}
-          {listState.error && <Text className={styles.errorText}>{listState.error}</Text>}
-          {taskState.error && <Text className={styles.errorText}>{taskState.error}</Text>}
+          {error && <Text className={styles.errorText}>{error}</Text>}
 
           {/* Task listesi */}
-          {taskState.tasks.length > 0 && (
+          {displayTasks().length > 0 && (
             <View className={styles.taskListContainer}>
-              <Text className={styles.taskListTitle}>Görevler ({taskState.tasks.length})</Text>
+              <Text className={styles.taskListTitle}>Görevler ({displayTasks().length})</Text>
               <OptimizedFlatList
-                data={taskState.tasks}
+                data={displayTasks()}
                 renderItem={renderTaskItem}
                 className={styles.taskList}
                 contentContainerStyle={{

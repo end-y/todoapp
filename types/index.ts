@@ -6,8 +6,7 @@ export * from './entities';
 // Component types
 export * from './components';
 
-// Reducer types
-export * from './reducers';
+// Reducer types - removed (simplified to useState)
 
 // Store types
 export * from './stores';

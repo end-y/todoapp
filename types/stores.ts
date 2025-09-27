@@ -9,8 +9,13 @@ export interface NotificationState {
 
 // Screen Context Types
 export interface ScreenContextType {
-  listState: any; // TODO: ListState ile değiştir
-  listDispatch: any; // TODO: Dispatch<ListAction> ile değiştir
-  handleAddTask: (taskName: string) => Promise<void>;
-  setCurrentListId: (id: number) => void;
+  currentListId: number | null;
+  listName: string;
+  isLoading: boolean;
+  error: string | null;
+  setCurrentListId: (id: number | null) => void;
+  setListName: (name: string) => void;
+  setIsLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  handleAddTask: (taskName: string, description?: string, dueDate?: string) => Promise<void>;
 }

@@ -15,7 +15,15 @@ export default function HandleListScreen() {
   const ref = useRef<TextInput>(null);
   const isFocused = useIsFocused();
   // Shared context'ten list state'i al
-  const { listState, listDispatch, setCurrentListId } = useScreenContext();
+  const {
+    currentListId,
+    listName,
+    isLoading,
+    setCurrentListId,
+    setListName,
+    setIsLoading,
+    setError,
+  } = useScreenContext();
   const { withErrorHandling } = useErrorHandler('HandleListScreen');
 
   // React Query hooks
@@ -44,19 +52,19 @@ export default function HandleListScreen() {
   useEffect(() => {
     if (isEditMode && existingList) {
       setCurrentListId(existingList.id);
-      listDispatch({ type: 'UPDATE_LIST_NAME', payload: existingList.name });
+      setListName(existingList.name);
     }
-  }, [isEditMode, existingList, setCurrentListId]);
+  }, [isEditMode, existingList, setCurrentListId, setListName]);
 
   // Create mode için yeni liste oluştur
   useEffect(() => {
     if (!isEditMode) {
       const createInitialList = withErrorHandling(
         async () => {
-          listDispatch({ type: 'SET_LOADING', payload: true });
-          const result = await createListMutation.mutateAsync(listState.name);
+          setIsLoading(true);
+          const result = await createListMutation.mutateAsync(listName);
           setCurrentListId(result.lastInsertRowId as number);
-          listDispatch({ type: 'SET_LOADING', payload: false });
+          setIsLoading(false);
         },
         {
           showToast: true,
@@ -66,25 +74,18 @@ export default function HandleListScreen() {
 
       createInitialList();
     }
-  }, [
-    isEditMode,
-    withErrorHandling,
-    createListMutation,
-    listState.name,
-    setCurrentListId,
-    listDispatch,
-  ]);
+  }, [isEditMode, withErrorHandling, createListMutation, listName, setCurrentListId, setIsLoading]);
 
   const handleTextChange = (text: string) => {
-    listDispatch({ type: 'UPDATE_LIST_NAME', payload: text });
+    setListName(text);
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    if (listState.id) {
+    if (currentListId) {
       debounceTimerRef.current = setTimeout(() => {
-        debouncedUpdateList(listState.id!, text);
+        debouncedUpdateList(currentListId, text);
       }, 1000);
     }
   };
@@ -106,12 +107,12 @@ export default function HandleListScreen() {
   return (
     <TextInput
       ref={ref}
-      value={listState.name}
+      value={listName}
       className={styles.textInput}
       onChangeText={handleTextChange}
       selectTextOnFocus={true}
       returnKeyType="done"
-      editable={!listState.isLoading}
+      editable={!isLoading}
       placeholder={isEditMode ? 'Liste adını düzenle...' : 'Yeni liste adı...'}
       placeholderTextColor="rgba(255,255,255,0.5)"
     />
