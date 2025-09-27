@@ -13,7 +13,6 @@ const ListNavigation = ({ backgroundColor, list }: { backgroundColor: string; li
             <PageHeader
               title="Yeni Liste"
               onRightButtonPress={() => {
-                setTasks(list);
                 router.push('/list-settings-modal');
               }}
               backgroundColor={backgroundColor}

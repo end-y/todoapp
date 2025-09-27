@@ -30,7 +30,7 @@ export default function ScreensLayout() {
   const deleteTaskMutation = useDeleteTask();
   const updateTaskMutation = useUpdateTask();
   const [taskState, taskDispatch] = useReducer(taskReducer, initialTaskState);
-  const { tasks } = useListStore();
+  const { tasks, setTasks, filter } = useListStore();
   // Task ekleme fonksiyonu - tüm screens'lerde kullanılabilir
   const getList = useCallback(() => {
     const page = params.screen;
@@ -130,6 +130,11 @@ export default function ScreensLayout() {
     }
   }, [existingTasks]);
   useEffect(() => {
+    if (filter) {
+      taskDispatch({ type: 'SET_TASKS', payload: existingTasks.filter((task) => filter(task)) });
+    }
+  }, [existingTasks, filter]);
+  useEffect(() => {
     if (tasks.length > 0) {
       taskDispatch({ type: 'SET_TASKS', payload: tasks });
     }
@@ -145,7 +150,7 @@ export default function ScreensLayout() {
   return (
     <ScreenProvider value={contextValue}>
       <View className={[styles.container, getContainerColor()].join(' ')}>
-        <View style={{ flex: 1 }}>
+        <View className={styles.container_inner}>
           <ListNavigation list={taskState.tasks} backgroundColor={getContainerColor()} />
           {/* Hata mesajları */}
           {listState.error && <Text className={styles.errorText}>{listState.error}</Text>}
@@ -177,10 +182,11 @@ export default function ScreensLayout() {
 }
 
 const styles = {
+  container_inner: 'flex-1',
   container: 'flex-1 p-4',
   textInput: 'text-white text-3xl font-bold bg-transparent border-b border-white/30 px-2',
   errorText: 'text-red-400 text-center mt-4 text-lg',
-  taskListContainer: 'flex-1 mt-6',
+  taskListContainer: 'flex-[7] mt-1',
   taskListTitle: 'text-white text-xl font-semibold mb-3',
   taskList: 'flex-1',
 };

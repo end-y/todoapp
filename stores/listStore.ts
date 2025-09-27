@@ -8,6 +8,8 @@ export interface ListState {
   // Görevler
   tasks: Task[];
   listRef: any;
+  filter: ((task: Task) => boolean) | null;
+  setFilter: (filter: ((task: Task) => boolean) | null) => void;
   setListRef: (listRef: React.RefObject<TextInput>) => void;
   // Actions - sadece modal için gerekli olanlar
   setTasks: (tasks: Task[]) => void;
@@ -18,6 +20,10 @@ export const useListStore = create<ListState>((set, get) => ({
   // Initial state
   tasks: [],
   listRef: null,
+  filter: null,
+  setFilter: (filter: ((task: Task) => boolean) | null) => {
+    set({ filter });
+  },
   setTasks: (tasks: Task[]) => {
     set({ tasks });
   },

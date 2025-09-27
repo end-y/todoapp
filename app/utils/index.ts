@@ -183,3 +183,21 @@ export const getHTMLContent = (
     </html>
   `;
 };
+
+export const getDateString = (date: Date) => date.toISOString().split('T')[0];
+export const getTodayString = () => getDateString(new Date());
+export const getYesterdayString = () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return getDateString(yesterday);
+};
+export const getTomorrowString = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return getDateString(tomorrow);
+};
+export const getWeekLaterString = () => {
+  const weekLater = new Date();
+  weekLater.setDate(weekLater.getDate() + 7);
+  return getDateString(weekLater);
+};
