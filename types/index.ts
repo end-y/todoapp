@@ -15,3 +15,5 @@ export * from './stores';
 // Common types
 export * from './common';
 
+// Error types
+export * from './errors';

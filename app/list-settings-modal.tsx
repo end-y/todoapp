@@ -8,11 +8,13 @@ import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import { useDeleteListById } from '@/query-management/list';
 import { getHTMLContent } from './utils';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 const ListSettingsModal = () => {
   const navigation = useNavigation();
   const deleteListMutation = useDeleteListById();
   const [currentView, setCurrentView] = useState<'main' | 'sort'>('main');
   const { tasks, listRef, sortTasks, setTasks } = useListStore.getState();
+  const { withErrorHandling, handleValidationError } = useErrorHandler('ListSettingsModal');
   const isDefaultList = Array.from(new Set(tasks.map((task) => task.list_id))).length > 1;
   // Store'dan liste bilgilerini al
 
@@ -25,12 +27,12 @@ const ListSettingsModal = () => {
     }
   }, [listRef]);
 
-  const handlePrintList = async () => {
-    try {
+  const handlePrintList = withErrorHandling(
+    async () => {
       const listTasks = tasks;
 
       if (listTasks.length === 0) {
-        Alert.alert('Uyarı', 'Yazdırılacak görev bulunamadı.');
+        handleValidationError('Yazdırılacak görev bulunamadı.');
         return;
       }
 
@@ -41,43 +43,45 @@ const ListSettingsModal = () => {
 
       const html = getHTMLContent(listTasks, currentDate, completedTasks, pendingTasks);
 
-      try {
-        const { uri } = await Print.printToFileAsync({
-          html,
-          width: 612,
-          height: 792,
-        });
-        shareAsync(uri, {
-          UTI: '.pdf',
-          mimeType: 'application/pdf',
-        });
-      } catch (error) {
-        Alert.alert('Hata', 'PDF oluşturulurken bir hata oluştu.');
-      }
-    } catch (error) {
-      Alert.alert('Hata', 'Yazdırma özelliği kullanılamıyor.');
-    }
-  };
-
-  const handleCopyList = async () => {
-    const listTasks = tasks;
-    let listText = '';
-    if (listTasks.length === 0) {
-      listText += '• Henüz görev eklenmemiş';
-    } else {
-      listTasks.forEach((task) => {
-        const icon = task.is_completed ? '✅' : '⭕';
-        listText += `${icon} ${task.name}\n`;
+      const { uri } = await Print.printToFileAsync({
+        html,
+        width: 612,
+        height: 792,
       });
-    }
 
-    try {
+      await shareAsync(uri, {
+        UTI: '.pdf',
+        mimeType: 'application/pdf',
+      });
+    },
+    {
+      showToast: true,
+      logError: true,
+    }
+  );
+
+  const handleCopyList = withErrorHandling(
+    async () => {
+      const listTasks = tasks;
+      let listText = '';
+
+      if (listTasks.length === 0) {
+        listText += '• Henüz görev eklenmemiş';
+      } else {
+        listTasks.forEach((task) => {
+          const icon = task.is_completed ? '✅' : '⭕';
+          listText += `${icon} ${task.name}\n`;
+        });
+      }
+
       await Clipboard.setStringAsync(listText);
       Alert.alert('Başarılı', 'Liste panoya kopyalandı!');
-    } catch (error) {
-      Alert.alert('Hata', 'Liste kopyalanırken bir hata oluştu.');
+    },
+    {
+      showToast: true,
+      logError: true,
     }
-  };
+  );
 
   const handleDeleteList = () => {
     Alert.alert('Listeyi Sil', `Listeyi silmek istediğinizden emin misiniz?`, [

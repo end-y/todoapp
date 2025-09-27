@@ -5,6 +5,7 @@ import { useCreateList, useUpdateList, useGetListById } from '@/query-management
 import { useScreenContext } from './context';
 import { useListStore } from '@/stores/listStore';
 import { useIsFocused } from '@react-navigation/native';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function HandleListScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -15,6 +16,7 @@ export default function HandleListScreen() {
   const isFocused = useIsFocused();
   // Shared context'ten list state'i al
   const { listState, listDispatch, setCurrentListId } = useScreenContext();
+  const { withErrorHandling } = useErrorHandler('HandleListScreen');
 
   // React Query hooks
   const createListMutation = useCreateList();
@@ -25,16 +27,16 @@ export default function HandleListScreen() {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const debouncedUpdateList = useCallback(
-    async (id: number, name: string) => {
-      if (!name.trim()) return;
-
-      try {
+    withErrorHandling(
+      async (id: number, name: string) => {
+        if (!name.trim()) return;
         await updateListMutation.mutateAsync({ id, name });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Liste güncellenirken hata';
-        listDispatch({ type: 'SET_ERROR', payload: errorMessage });
+      },
+      {
+        showToast: true,
+        logError: true,
       }
-    },
+    ),
     [updateListMutation]
   );
 
@@ -49,23 +51,29 @@ export default function HandleListScreen() {
   // Create mode için yeni liste oluştur
   useEffect(() => {
     if (!isEditMode) {
-      const createInitialList = async () => {
-        listDispatch({ type: 'SET_LOADING', payload: true });
-        try {
+      const createInitialList = withErrorHandling(
+        async () => {
+          listDispatch({ type: 'SET_LOADING', payload: true });
           const result = await createListMutation.mutateAsync(listState.name);
           setCurrentListId(result.lastInsertRowId as number);
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Liste oluşturulurken hata';
-          listDispatch({ type: 'SET_ERROR', payload: errorMessage });
-          console.error('Liste oluşturulurken hata:', error);
-        } finally {
           listDispatch({ type: 'SET_LOADING', payload: false });
+        },
+        {
+          showToast: true,
+          logError: true,
         }
-      };
+      );
 
       createInitialList();
     }
-  }, [isEditMode]); // Sadece mode değiştiğinde çalışsın
+  }, [
+    isEditMode,
+    withErrorHandling,
+    createListMutation,
+    listState.name,
+    setCurrentListId,
+    listDispatch,
+  ]);
 
   const handleTextChange = (text: string) => {
     listDispatch({ type: 'UPDATE_LIST_NAME', payload: text });

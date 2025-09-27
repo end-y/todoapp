@@ -9,6 +9,7 @@ export default function ErrorScreen() {
   const params = useLocalSearchParams();
   const errorMessage = (params.message as string) || 'Bir hata oluştu';
   const errorTitle = (params.title as string) || 'Hata';
+  const errorId = params.errorId as string;
 
   const handleGoBack = () => {
     router.back();
@@ -59,6 +60,18 @@ export default function ErrorScreen() {
             <Text className="text-lg font-semibold text-gray-700">Geri Dön</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Error ID for support */}
+        {errorId && (
+          <View className="mt-8 rounded-lg bg-gray-100 p-4">
+            <Text className="mb-2 text-center text-sm font-semibold text-gray-700">
+              Destek İçin Hata Kodu:
+            </Text>
+            <Text className="text-center font-mono text-xs text-gray-600">
+              {errorId.slice(-12)}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Bottom spacing */}

@@ -94,8 +94,6 @@ export const useCreateTask = () => {
         type: 'success',
         text1: 'Görev oluşturuldu',
         text2: 'Yeni görev başarıyla oluşturuldu!',
-        position: 'top',
-        topOffset: 100,
       });
     },
   });
@@ -114,8 +112,6 @@ export const useDeleteTask = () => {
         type: 'success',
         text1: 'Görev silindi',
         text2: 'Görev başarıyla silindi!',
-        position: 'top',
-        topOffset: 100,
       });
     },
   });
@@ -134,8 +130,6 @@ export const useUpdateTask = () => {
         type: 'success',
         text1: 'Görev güncellendi',
         text2: 'Görev başarıyla güncellendi!',
-        position: 'top',
-        topOffset: 100,
       });
     },
   });

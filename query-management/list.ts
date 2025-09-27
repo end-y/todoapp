@@ -34,7 +34,6 @@ export const useCreateList = () => {
         type: 'success',
         text1: 'Liste oluşturuldu',
         text2: 'Yeni liste başarıyla oluşturuldu!',
-        position: 'top',
       });
     },
   });
@@ -51,8 +50,6 @@ export const useUpdateList = () => {
         type: 'success',
         text1: 'Liste güncellendi',
         text2: 'Liste başarıyla güncellendi!',
-        position: 'top',
-        topOffset: 100,
       });
     },
   });
@@ -72,8 +69,6 @@ export const useDeleteListById = () => {
         type: 'success',
         text1: 'Liste silindi',
         text2: 'Liste başarıyla silindi!',
-        position: 'top',
-        topOffset: 100,
       });
     },
   });

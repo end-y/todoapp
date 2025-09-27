@@ -1,7 +1,7 @@
 import '../global.css';
 
 import { Stack } from 'expo-router';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +10,7 @@ import DatabaseProvider from '@/providers/database-provider';
 import Header from '@/components/Header';
 import PageHeader from '@/components/PageHeader';
 import MainNavigation from '@/navigations/main-navigations';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const toastConfig = {
   success: (props: any) => (
@@ -51,13 +52,25 @@ const toastConfig = {
 };
 
 export default function Layout() {
+  const offset = Platform.select({
+    ios: 100,
+    android: 0,
+  });
   return (
     <SafeAreaProvider>
-      <DatabaseProvider>
-        <MainNavigation />
-        <GlobalLoadingIndicator />
-        <Toast config={toastConfig} position="top" visibilityTime={3000} autoHide={true} />
-      </DatabaseProvider>
+      <ErrorBoundary>
+        <DatabaseProvider>
+          <MainNavigation />
+          <GlobalLoadingIndicator />
+          <Toast
+            config={toastConfig}
+            position="top"
+            topOffset={offset}
+            visibilityTime={3000}
+            autoHide={true}
+          />
+        </DatabaseProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }
