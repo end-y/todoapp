@@ -1,17 +1,7 @@
-import { Divider } from '@/components/Divider';
-import { View, Text } from 'react-native';
+import TaskScreenHeader from '@/components/TaskScreenHeader';
 
 const UnassignedTasksScreen = () => {
-  return (
-    <View>
-      <Text className={styles.text}>Unassigned Tasks</Text>
-      <Divider />
-    </View>
-  );
+  return <TaskScreenHeader title="Atanmamış Görevler" />;
 };
 
 export default UnassignedTasksScreen;
-
-const styles = {
-  text: 'text-white text-4xl font-bold',
-};

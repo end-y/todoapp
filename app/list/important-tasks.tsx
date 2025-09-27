@@ -1,17 +1,7 @@
-import { View, Text } from 'react-native';
-import { Divider } from '@/components/Divider';
+import TaskScreenHeader from '@/components/TaskScreenHeader';
 
 const ImportantTaskScreen = () => {
-  return (
-    <View>
-      <Text className={styles.text}>Önemli Görevler</Text>
-      <Divider />
-    </View>
-  );
+  return <TaskScreenHeader title="Önemli Görevler" />;
 };
 
 export default ImportantTaskScreen;
-
-const styles = {
-  text: 'text-white text-4xl font-bold',
-};
