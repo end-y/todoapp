@@ -18,7 +18,7 @@ import { ScreenProvider } from './context';
 import PageHeader from '@/components/PageHeader';
 import TaskItem from '@/components/TaskItem';
 import ListNavigation from '@/navigations/list-navigations';
-import { DefaultListId } from '@/types';
+import { DefaultListId, Task } from '@/types';
 import { useListStore } from '@/stores/listStore';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useIsFocused } from '@react-navigation/native';
@@ -136,8 +136,22 @@ export default function ScreensLayout() {
 
   const handleToggleComplete = useCallback(
     (task: any) => {
-      updateTaskMutation.mutate({ id: task.id, task: { is_completed: !task.is_completed } });
-      // TODO: API call to update task completion
+      const newCompletedStatus = !task.is_completed;
+      const newStatus = newCompletedStatus ? 'completed' : 'pending';
+
+      updateTaskMutation.mutate({
+        id: task.id,
+        task: {
+          is_completed: newCompletedStatus,
+          status: newStatus,
+        },
+      });
+
+      const findTask = tasks.find((t: Task) => t.id === task.id);
+      if (findTask) {
+        findTask.is_completed = newCompletedStatus;
+        findTask.status = newStatus;
+      }
     },
     [updateTaskMutation]
   );
@@ -161,7 +175,7 @@ export default function ScreensLayout() {
     }
 
     return finalTasks;
-  }, [existingTasks, tasks, filter, isFocused]);
+  }, [existingTasks, tasks, filter]);
   const renderTaskItem = useCallback(
     ({ item }: { item: any }) => (
       <Swipable key={item.id} onDelete={() => handleDeleteTask(item)}>
@@ -171,8 +185,11 @@ export default function ScreensLayout() {
     [params.color, handleDeleteTask, handleToggleComplete]
   );
   useEffect(() => {
-    setTasks(displayTasks());
-  }, [isFocused]);
+    // Sadece existingTasks değiştiğinde store'u güncelle
+    if (existingTasks && existingTasks.length > 0) {
+      setTasks(existingTasks);
+    }
+  }, [existingTasks, setTasks]);
   return (
     <ScreenProvider value={contextValue}>
       <View className={[styles.container, getContainerColor()].join(' ')}>
@@ -186,7 +203,7 @@ export default function ScreensLayout() {
             <View className={styles.taskListContainer}>
               <Text className={styles.taskListTitle}>Görevler ({displayTasks().length})</Text>
               <OptimizedFlatList
-                data={displayTasks()}
+                data={tasks}
                 renderItem={renderTaskItem}
                 className={styles.taskList}
                 contentContainerStyle={{

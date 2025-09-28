@@ -1,12 +1,15 @@
-import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 import AnimatedCheckbox from '@/components/AnimatedCheckbox';
 import DatePickerInput from '@/components/DatePickerInput';
 import { useCreateTask, useUpdateTask, useGetTaskById } from '@/query-management/task';
 import PageHeader from '@/components/PageHeader';
 import { TaskPriorities, TaskStatuses } from '@/types/entities';
 import TaskNavigation from '@/navigations/task-navigations';
+import { useListStore } from '@/stores/listStore';
 
 export default function TaskDetailScreen() {
   const { id, listId, color } = useLocalSearchParams<{
@@ -19,7 +22,7 @@ export default function TaskDetailScreen() {
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const { data: existingTask } = useGetTaskById(isEditMode ? parseInt(id!) : 0);
-
+  const { tasks, setTasks } = useListStore();
   const [task, setTask] = useState({
     id: id || '',
     name: '',
@@ -28,6 +31,7 @@ export default function TaskDetailScreen() {
     priority: 'medium',
     is_completed: false,
     due_date: '',
+    image: '',
     list_id: parseInt(listId || '1'),
   });
 
@@ -41,6 +45,7 @@ export default function TaskDetailScreen() {
         priority: existingTask.priority || 'medium',
         is_completed: existingTask.is_completed || false,
         due_date: existingTask.due_date || '',
+        image: existingTask.image || '',
         list_id: existingTask.list_id || parseInt(listId || '1'),
       });
     }
@@ -48,6 +53,35 @@ export default function TaskDetailScreen() {
 
   const handleDateChange = (date: string) => {
     setTask({ ...task, due_date: date });
+  };
+
+  const requestPermission = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gereklidir.');
+      return false;
+    }
+    return true;
+  };
+
+  const pickImage = async () => {
+    const hasPermission = await requestPermission();
+    if (!hasPermission) return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setTask({ ...task, image: result.assets[0].uri });
+    }
+  };
+
+  const removeImage = () => {
+    setTask({ ...task, image: '' });
   };
 
   const handleSave = () => {
@@ -61,9 +95,28 @@ export default function TaskDetailScreen() {
           priority: task.priority,
           is_completed: task.is_completed,
           due_date: task.due_date,
+          image: task.image,
           list_id: task.list_id,
         },
       });
+
+      // Store'daki task'ı güncelle
+      const updatedTasks = tasks.map((t) =>
+        t.id === parseInt(task.id)
+          ? {
+              ...t,
+              name: task.name,
+              description: task.description,
+              status: task.status,
+              priority: task.priority,
+              is_completed: task.is_completed,
+              due_date: task.due_date,
+              image: task.image,
+              list_id: task.list_id,
+            }
+          : t
+      );
+      setTasks(updatedTasks);
     } else {
       createTaskMutation.mutate({
         name: task.name,
@@ -72,6 +125,7 @@ export default function TaskDetailScreen() {
         priority: task.priority,
         is_completed: task.is_completed,
         due_date: task.due_date,
+        image: task.image,
         list_id: task.list_id,
       });
     }
@@ -112,7 +166,25 @@ export default function TaskDetailScreen() {
         <View className={styles.checkboxContainer}>
           <AnimatedCheckbox
             checked={task.is_completed}
-            onToggle={() => setTask({ ...task, is_completed: !task.is_completed })}
+            onToggle={() => {
+              const newCompletedStatus = !task.is_completed;
+              const newStatus = newCompletedStatus ? 'completed' : 'pending';
+
+              // Local task state'i güncelle
+              setTask({
+                ...task,
+                is_completed: newCompletedStatus,
+                status: newStatus,
+              });
+
+              // Store'daki tasks'ı da güncelle
+              const updatedTasks = tasks.map((t) =>
+                t.id === parseInt(task.id)
+                  ? { ...t, is_completed: newCompletedStatus, status: newStatus }
+                  : t
+              );
+              setTasks(updatedTasks);
+            }}
           />
           <Text className={styles.checkboxText}>Tamamlandı</Text>
         </View>
@@ -163,6 +235,28 @@ export default function TaskDetailScreen() {
           </View>
         </View>
 
+        {/* Image Section */}
+        <View className={styles.mb4}>
+          <Text className={styles.content}>Görsel</Text>
+          {task.image ? (
+            <View className={styles.imageContainer}>
+              <Image
+                source={{ uri: task.image }}
+                className={styles.taskImage}
+                contentFit="cover"
+                transition={200}
+              />
+              <TouchableOpacity onPress={removeImage} className={styles.removeImageButton}>
+                <Text className={styles.removeImageText}>Görseli Kaldır</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={pickImage} className={styles.imagePickerButton}>
+              <Text className={styles.imagePickerText}>+ Görsel Ekle</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Due Date */}
         <DatePickerInput
           label="Son Tarih"
@@ -192,4 +286,11 @@ const styles = {
   priorityButton: 'rounded-lg px-4 py-2',
   priorityButtonActive: 'bg-blue',
   priorityButtonInactive: 'bg-gray-200',
+  imageContainer: 'mt-2',
+  taskImage: 'w-full h-48 rounded-lg',
+  imagePickerButton:
+    'mt-2 rounded-lg bg-gray-100 p-4 border-2 border-dashed border-gray-300 items-center',
+  imagePickerText: 'text-gray-600 font-medium',
+  removeImageButton: 'mt-2 bg-red-500 rounded-lg p-2 items-center',
+  removeImageText: 'text-white font-medium',
 };

@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { Divider } from '@/components/Divider';
 import { useMemo, useEffect, useCallback, useRef } from 'react';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';

@@ -56,9 +56,9 @@ export default function HandleListScreen() {
     }
   }, [isEditMode, existingList, setCurrentListId, setListName]);
 
-  // Create mode için yeni liste oluştur
+  // Create mode için yeni liste oluştur - sadece bir kez
   useEffect(() => {
-    if (!isEditMode) {
+    if (!isEditMode && !currentListId && !isLoading) {
       const createInitialList = withErrorHandling(
         async () => {
           setIsLoading(true);
@@ -74,7 +74,7 @@ export default function HandleListScreen() {
 
       createInitialList();
     }
-  }, [isEditMode, withErrorHandling, createListMutation, listName, setCurrentListId, setIsLoading]);
+  }, [isEditMode, currentListId, isLoading]);
 
   const handleTextChange = (text: string) => {
     setListName(text);
