@@ -13,7 +13,7 @@ const ListSettingsModal = () => {
   const navigation = useNavigation();
   const deleteListMutation = useDeleteListById();
   const [currentView, setCurrentView] = useState<'main' | 'sort'>('main');
-  const { tasks, listRef, sortTasks, setTasks } = useListStore.getState();
+  const { tasks, listRef, sortTasks } = useListStore.getState();
   const { withErrorHandling, handleValidationError } = useErrorHandler('ListSettingsModal');
   const isDefaultList = Array.from(new Set(tasks.map((task) => task.list_id))).length > 1;
   // Store'dan liste bilgilerini al

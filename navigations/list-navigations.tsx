@@ -4,7 +4,6 @@ import { List, Task } from '@/types';
 import { router, Slot, Stack } from 'expo-router';
 
 const ListNavigation = ({ backgroundColor, list }: { backgroundColor: string; list: Task[] }) => {
-  const { setTasks } = useListStore();
   return (
     <>
       <Stack.Screen

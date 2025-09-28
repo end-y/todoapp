@@ -21,6 +21,7 @@ import ListNavigation from '@/navigations/list-navigations';
 import { DefaultListId } from '@/types';
 import { useListStore } from '@/stores/listStore';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useIsFocused } from '@react-navigation/native';
 
 export default function ScreensLayout() {
   const params = useLocalSearchParams();
@@ -34,8 +35,9 @@ export default function ScreensLayout() {
   const createTaskMutation = useCreateTask();
   const deleteTaskMutation = useDeleteTask();
   const updateTaskMutation = useUpdateTask();
-  const { handleError, handleQueryError, withErrorHandling } = useErrorHandler('ListLayout');
-  const { tasks, setTasks, filter } = useListStore();
+  const { withErrorHandling } = useErrorHandler('ListLayout');
+  const { tasks, filter, setTasks } = useListStore();
+  const isFocused = useIsFocused();
   // Tüm hook'ları unconditional çağır
   const scheduledTasksQuery = useGetScheduledTasks();
   const importantTasksQuery = useGetImportantTasks();
@@ -154,12 +156,12 @@ export default function ScreensLayout() {
     }
 
     // Filter varsa uygula
-    if (filter && finalTasks.length > 0) {
+    if (filter && finalTasks.length > 0 && isPlannedTasks()) {
       finalTasks = finalTasks.filter((task) => filter(task));
     }
 
     return finalTasks;
-  }, [existingTasks, tasks, filter]);
+  }, [existingTasks, tasks, filter, isFocused]);
   const renderTaskItem = useCallback(
     ({ item }: { item: any }) => (
       <Swipable key={item.id} onDelete={() => handleDeleteTask(item)}>
@@ -168,6 +170,9 @@ export default function ScreensLayout() {
     ),
     [params.color, handleDeleteTask, handleToggleComplete]
   );
+  useEffect(() => {
+    setTasks(displayTasks());
+  }, [isFocused]);
   return (
     <ScreenProvider value={contextValue}>
       <View className={[styles.container, getContainerColor()].join(' ')}>

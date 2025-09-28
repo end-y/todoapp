@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { List, Task } from '@/types';
+import { Task } from '@/types';
 import { TextInput } from 'react-native';
 
 export interface ListState {
@@ -24,14 +24,15 @@ export const useListStore = create<ListState>((set, get) => ({
   setFilter: (filter: ((task: Task) => boolean) | null) => {
     set({ filter });
   },
-  setTasks: (tasks: Task[]) => {
-    set({ tasks });
-  },
   setListRef: (listRef: React.RefObject<TextInput>) => {
     set({ listRef });
   },
+  setTasks: (tasks: Task[]) => {
+    set({ tasks });
+  },
   sortTasks: (sortBy: 'priority' | 'alphabetical' | 'dueDate' | 'creationDate') => {
     set((state) => {
+      console.log('SortTasks called with:', state.tasks);
       const sortedTasks = [...state.tasks].sort((a, b) => {
         switch (sortBy) {
           case 'priority':
